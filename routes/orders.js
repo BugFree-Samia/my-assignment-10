@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getAllOrders,
-  getUserOrders,
-  createOrder
-} = require('../controllers/orderController');
+const orderController = require('../controllers/orderController');
 
-// Define routes
-router.get('/', getAllOrders);
-router.get('/user/:email', getUserOrders);
-router.post('/', createOrder);
+// GET all orders
+router.get('/', orderController.getAllOrders);
 
-module.exports=router;
+// GET user's orders
+router.get('/user/:email', orderController.getUserOrders);
+
+// POST create order
+router.post('/', orderController.createOrder);
+
+module.exports = router;

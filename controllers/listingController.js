@@ -1,13 +1,10 @@
 const { ObjectId } = require('mongodb');
-let listingsCollection;
+const { getListingsCollection } = require('../config/database');
 
-const setListingsCollection = (collection) => {
-  listingsCollection = collection;
-};
-
-// Get all listings
-const getAllListings = async (req, res) => {
+// GET all listings
+exports.getAllListings = async (req, res) => {
   try {
+    const listingsCollection = getListingsCollection();
     const listings = await listingsCollection.find().sort({ createdAt: -1 }).toArray();
     res.json({ success: true, data: listings });
   } catch (error) {
@@ -15,9 +12,10 @@ const getAllListings = async (req, res) => {
   }
 };
 
-// Get recent 6 listings
-const getRecentListings = async (req, res) => {
+// GET recent 6 listings
+exports.getRecentListings = async (req, res) => {
   try {
+    const listingsCollection = getListingsCollection();
     const listings = await listingsCollection.find()
       .sort({ createdAt: -1 })
       .limit(6)
@@ -28,10 +26,11 @@ const getRecentListings = async (req, res) => {
   }
 };
 
-// Get listings by category
-const getListingsByCategory = async (req, res) => {
+// GET listings by category
+exports.getListingsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
+    const listingsCollection = getListingsCollection();
     const listings = await listingsCollection.find({ category })
       .sort({ createdAt: -1 })
       .toArray();
@@ -41,10 +40,11 @@ const getListingsByCategory = async (req, res) => {
   }
 };
 
-// Get user's listings
-const getUserListings = async (req, res) => {
+// GET user's listings
+exports.getUserListings = async (req, res) => {
   try {
     const { email } = req.params;
+    const listingsCollection = getListingsCollection();
     const listings = await listingsCollection.find({ email })
       .sort({ createdAt: -1 })
       .toArray();
@@ -54,14 +54,29 @@ const getUserListings = async (req, res) => {
   }
 };
 
-// Get single listing
-const getListingById = async (req, res) => {
+// Search listings
+exports.searchListings = async (req, res) => {
+  try {
+    const { query } = req.params;
+    const listingsCollection = getListingsCollection();
+    const listings = await listingsCollection.find({
+      name: { $regex: query, $options: 'i' }
+    }).sort({ createdAt: -1 }).toArray();
+    res.json({ success: true, data: listings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// GET single listing
+exports.getSingleListing = async (req, res) => {
   try {
     const { id } = req.params;
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: 'Invalid listing ID' });
     }
     
+    const listingsCollection = getListingsCollection();
     const listing = await listingsCollection.findOne({ _id: new ObjectId(id) });
     if (!listing) {
       return res.status(404).json({ success: false, message: 'Listing not found' });
@@ -73,21 +88,8 @@ const getListingById = async (req, res) => {
   }
 };
 
-// Search listings
-const searchListings = async (req, res) => {
-  try {
-    const { query } = req.params;
-    const listings = await listingsCollection.find({
-      name: { $regex: query, $options: 'i' }
-    }).sort({ createdAt: -1 }).toArray();
-    res.json({ success: true, data: listings });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Create listing
-const createListing = async (req, res) => {
+// POST create listing
+exports.createListing = async (req, res) => {
   try {
     const { name, category, price, location, description, image, email, date } = req.body;
 
@@ -121,6 +123,7 @@ const createListing = async (req, res) => {
       updatedAt: new Date()
     };
 
+    const listingsCollection = getListingsCollection();
     const result = await listingsCollection.insertOne(listing);
     res.status(201).json({ 
       success: true, 
@@ -132,14 +135,15 @@ const createListing = async (req, res) => {
   }
 };
 
-// Update listing
-const updateListing = async (req, res) => {
+// PUT update listing
+exports.updateListing = async (req, res) => {
   try {
     const { id } = req.params;
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: 'Invalid listing ID' });
     }
     
+    const listingsCollection = getListingsCollection();
     const result = await listingsCollection.updateOne(
       { _id: new ObjectId(id) },
       { $set: { ...req.body, updatedAt: new Date() } }
@@ -155,14 +159,15 @@ const updateListing = async (req, res) => {
   }
 };
 
-// Delete listing
-const deleteListing = async (req, res) => {
+// DELETE listing
+exports.deleteListing = async (req, res) => {
   try {
     const { id } = req.params;
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: 'Invalid listing ID' });
     }
     
+    const listingsCollection = getListingsCollection();
     const result = await listingsCollection.deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) {
       return res.status(404).json({ success: false, message: 'Listing not found' });
@@ -172,17 +177,4 @@ const deleteListing = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-};
-
-module.exports = {
-  setListingsCollection,
-  getAllListings,
-  getRecentListings,
-  getListingsByCategory,
-  getUserListings,
-  getListingById,
-  searchListings,
-  createListing,
-  updateListing,
-  deleteListing
 };

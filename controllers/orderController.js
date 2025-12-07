@@ -1,13 +1,10 @@
 const { ObjectId } = require('mongodb');
-let ordersCollection;
+const { getOrdersCollection } = require('../config/database');
 
-const setOrdersCollection = (collection) => {
-  ordersCollection = collection;
-};
-
-// Get all orders
-const getAllOrders = async (req, res) => {
+// GET all orders
+exports.getAllOrders = async (req, res) => {
   try {
+    const ordersCollection = getOrdersCollection();
     const orders = await ordersCollection.find().sort({ createdAt: -1 }).toArray();
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -15,10 +12,11 @@ const getAllOrders = async (req, res) => {
   }
 };
 
-// Get user's orders
-const getUserOrders = async (req, res) => {
+// GET user's orders
+exports.getUserOrders = async (req, res) => {
   try {
     const { email } = req.params;
+    const ordersCollection = getOrdersCollection();
     const orders = await ordersCollection.find({ email })
       .sort({ createdAt: -1 })
       .toArray();
@@ -28,10 +26,22 @@ const getUserOrders = async (req, res) => {
   }
 };
 
-// Create order
-const createOrder = async (req, res) => {
+// POST create order
+exports.createOrder = async (req, res) => {
   try {
-    const { productId, productName, category, buyerName, email, quantity, price, address, phone, date, additionalNotes } = req.body;
+    const { 
+      productId, 
+      productName, 
+      category, 
+      buyerName, 
+      email, 
+      quantity, 
+      price, 
+      address, 
+      phone, 
+      date, 
+      additionalNotes 
+    } = req.body;
 
     // Validation
     if (!productId) return res.status(400).json({ success: false, message: 'Product ID is required' });
@@ -63,6 +73,7 @@ const createOrder = async (req, res) => {
       createdAt: new Date()
     };
 
+    const ordersCollection = getOrdersCollection();
     const result = await ordersCollection.insertOne(order);
     res.status(201).json({ 
       success: true, 
@@ -72,11 +83,4 @@ const createOrder = async (req, res) => {
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
-};
-
-module.exports = {
-  setOrdersCollection,
-  getAllOrders,
-  getUserOrders,
-  createOrder
 };

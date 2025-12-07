@@ -1,26 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getAllListings,
-  getRecentListings,
-  getListingsByCategory,
-  getUserListings,
-  getListingById,
-  searchListings,
-  createListing,
-  updateListing,
-  deleteListing
-} = require('../controllers/listingController');
+const listingController = require('../controllers/listingController');
 
-// Define routes
-router.get('/', getAllListings);
-router.get('/recent', getRecentListings);
-router.get('/category/:category', getListingsByCategory);
-router.get('/user/:email', getUserListings);
-router.get('/search/:query', searchListings);
-router.get('/:id', getListingById);
-router.post('/', createListing);
-router.put('/:id', updateListing);
-router.delete('/:id', deleteListing);
+// GET all listings
+router.get('/', listingController.getAllListings);
+
+// GET recent 6 listings
+router.get('/recent', listingController.getRecentListings);
+
+// GET listings by category
+router.get('/category/:category', listingController.getListingsByCategory);
+
+// GET user's listings
+router.get('/user/:email', listingController.getUserListings);
+
+// Search listings
+router.get('/search/:query', listingController.searchListings);
+
+// GET single listing
+router.get('/:id', listingController.getSingleListing);
+
+// POST create listing
+router.post('/', listingController.createListing);
+
+// PUT update listing
+router.put('/:id', listingController.updateListing);
+
+// DELETE listing
+router.delete('/:id', listingController.deleteListing);
 
 module.exports = router;
